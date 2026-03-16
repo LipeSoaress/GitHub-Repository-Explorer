@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>GitHub Repository Explorer</title>
+<link rel="stylesheet" href="/static/style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+<img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" class="logo">
+<div class="title-box">
+<h1>GitHub Repository Explorer</h1>
+<p class="subtitle">Search users and repositories from GitHub</p>
+</div>
+</div>
+
+
+<div class="search-box">
+
+<input 
+id="repo"
+type="text"
+placeholder="username ou username/repo (ex: torvalds ou pallets/flask)"
+autocomplete="off"
+onkeypress="handleKeyPress(event)"
+>
+
+<button onclick="searchRepo()" id="searchBtn">
+🔍 Buscar
+</button>
+
+</div>
+
+
+<div class="suggestions">
+
+<h3>Perfis populares</h3>
+
+<div class="suggestion-list">
+
+<button onclick="quickSearch('torvalds')">
+torvalds
+</button>
+
+<button onclick="quickSearch('gvanrossum')">
+gvanrossum
+</button>
+
+<button onclick="quickSearch('django')">
+django
+</button>
+
+<button onclick="quickSearch('BrendanEich')">
+BrendanEich
+</button>
+
+<button onclick="quickSearch('sindresorhus')">
+sindresorhus
+</button>
+
+</div>
+
+</div>
+
+
+<div id="loading" class="loading"></div>
+
+<div id="result"></div>
+
+</div>
+
+
+<script>
+
+
+function handleKeyPress(event){
+
+if(event.key === "Enter"){
+searchRepo()
+}
+
+}
+
+
+function quickSearch(username){
+
+document.getElementById("repo").value = username
+
+searchRepo()
+
+}
+
+
+async function searchRepo(){
+
+const repo = document.getElementById("repo").value.trim()
+
+if(!repo){
+return
+}
+
+const parts = repo.split("/")
+
+document.getElementById("loading").innerText="Pesquisando..."
+document.getElementById("result").innerHTML=""
+document.getElementById("searchBtn").disabled=true
+
+try{
+
+let response
+let data
+
+/* BUSCA REPOSITÓRIO */
+
+if(parts.length === 2){
+
+const owner = parts[0]
+const name = parts[1]
+
+response = await fetch(`/repo/${owner}/${name}`)
+data = await response.json()
+
+if(data.error){
+throw new Error(data.error)
+}
+
+document.getElementById("result").innerHTML = `
+<div class="card">
+
+<img src="${data.avatar}" class="avatar">
+
+<div class="repo-name">
+${data.owner}/${data.name}
+</div>
+
+<div class="repo-description">
+${data.description || "Sem descrição"}
+</div>
+
+<div class="stats">
+<div>⭐ ${data.stars}</div>
+<div>🍴 ${data.forks}</div>
+<div>👀 ${data.watchers}</div>
+</div>
+
+<div class="language">
+💻 ${data.language || "Não especificada"}
+</div>
+
+<div class="updated">
+Atualizado: ${new Date(data.updated_at).toLocaleDateString()}
+</div>
+
+<a href="${data.url}" target="_blank">
+Abrir no GitHub
+</a>
+
+</div>
+`
+
+}
+
+/* BUSCA USUÁRIO */
+
+else if(parts.length === 1){
+
+const username = parts[0]
+
+response = await fetch(`/user/${username}`)
+data = await response.json()
+
+if(data.error){
+throw new Error(data.error)
+}
+
+let html = ""
+
+for(let repo of data){
+
+html += `
+<div class="card">
+
+<img src="${repo.avatar}" class="avatar">
+
+<div class="repo-name">
+${repo.owner}/${repo.name}
+</div>
+
+<div class="repo-description">
+${repo.description || "Sem descrição"}
+</div>
+
+<div class="stats">
+<div>⭐ ${repo.stars}</div>
+<div>🍴 ${repo.forks}</div>
+<div>👀 ${repo.watchers}</div>
+</div>
+
+<div class="language">
+💻 ${repo.language || "Não especificada"}
+</div>
+
+<div class="updated">
+Atualizado: ${new Date(repo.updated_at).toLocaleDateString()}
+</div>
+
+<a href="${repo.url}" target="_blank">
+Abrir no GitHub
+</a>
+
+</div>
+`
+}
+
+document.getElementById("result").innerHTML = html
+
+}
+
+else{
+
+throw new Error("Formato inválido")
+
+}
+
+}
+
+catch(error){
+
+document.getElementById("result").innerHTML =
+`<div class="card">❌ ${error.message}</div>`
+
+}
+
+document.getElementById("loading").innerText=""
+document.getElementById("searchBtn").disabled=false
+
+}
+
+</script>
+
+</body>
+</html>
