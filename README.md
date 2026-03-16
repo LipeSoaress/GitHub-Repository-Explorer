@@ -7,7 +7,7 @@ Aplicação web para pesquisar usuários e repositórios do GitHub utilizando a 
 A aplicação está disponível online:
 
 **Live Demo:**  
-...
+https://github-repository-explorer-wjaf.onrender.com
 
 ---
 
